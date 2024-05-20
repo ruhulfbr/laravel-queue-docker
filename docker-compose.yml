@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel-queue
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_DATABASE: laravel_queue
+      DB_USERNAME: root
+      DB_PASSWORD: root
+    networks:
+      - laravel-queue
+
+  queue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel-queue-worker
+    restart: unless-stopped
+    tty: true
+    entrypoint: sh -c 'php artisan migrate --seed && php artisan queue:work'
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_DATABASE: laravel_queue
+      DB_USERNAME: root
+      DB_PASSWORD: root
+    networks:
+      - laravel-queue
+
+  db:
+    image: mysql:latest
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: laravel_queue
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - laravel-queue
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+    networks:
+      - laravel-queue
+
+networks:
+  laravel-queue:
+    driver: bridge
+
+volumes:
+  mysql_data:
