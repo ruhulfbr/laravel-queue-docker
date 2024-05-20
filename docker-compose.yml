@@ -29,7 +29,7 @@ services:
     container_name: laravel-queue-worker
     restart: unless-stopped
     tty: true
-    entrypoint: sh -c 'php artisan migrate --seed && php artisan queue:work'
+    entrypoint: sh -c '/usr/local/bin/wait-for-it.sh db:3306 -- php artisan migrate --seed && php artisan queue:work'
     volumes:
       - .:/var/www/html
     depends_on:
